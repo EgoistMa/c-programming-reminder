@@ -2,11 +2,59 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define MAX_USERS 10
+
+struct user {
+    char username[15];
+    char password[15];
+};
+typedef struct user user_t;
+
 int main(void){
-    login();
+    user_t user_list[MAX_USERS];
+    LoadUsers(user_list);
+    //login();
     return 0;
 }
 
+void LoadUsers(user_t user_list[]) {
+    FILE* fichier = NULL;
+    fichier = fopen("login.txt", "r");
+    int NumberLogin = 0;
+    int i = 0;
+    if (fichier != NULL){
+        char line[30];
+        char username[15];
+        char password[15];
+        username[14] = '\0';
+        password[14] = '\0';
+        while(fgets(line,30, fichier)){
+            fscanf(fichier,"%s", &line);
+            for(i = 0; i<14; i++) {  //Reading the first 15 characters of the line and saving them in username[], stopping when there is a space.
+                if(line[i] == " "){
+                    username[i] = '\0';
+                    i = 14;
+                } else {
+                    username[i] = line[i];
+                }
+            }
+            for(i = 0; i<14; i++) {  //Reading the next 15 characters of the line and saving them in password[], stopping when there is a space.
+                if(line[i+15] == " ") {
+                    password[i] = '\0';
+                } else {
+                    password[i] = line[i];
+                }
+            }
+            strcpy(user_list[NumberLogin].username, username);
+            strcpy(user_list[NumberLogin].password, password);
+        }
+    } else {
+        printf("Opening error.");
+    }
+    for (i = 0; sizeof(user_list); i++) {
+        printf("Username: %s Password: %s\n", &user_list[i].username, &user_list[i].password);
+    }
+}
 //ASK a login and a password, say if they match in our login file                   Matthieu COLIN
 void login(void) {
     printf("\nEnter your user name: ");
