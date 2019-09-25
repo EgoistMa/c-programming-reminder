@@ -54,6 +54,7 @@ void LoadUsers(user_t user_list[]) {
     for (i = 0; sizeof(user_list); i++) {
         printf("Username: %s Password: %s\n", &user_list[i].username, &user_list[i].password);
     }
+    printf("%d", sizeof(user_list));
 }
 //ASK a login and a password, say if they match in our login file                   Matthieu COLIN
 void login(void) {
