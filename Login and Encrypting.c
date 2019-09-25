@@ -10,6 +10,13 @@ struct user {
 };
 typedef struct user user_t;
 
+void Rencrypting(char* word, int stringsize);
+void Encrypting(char* word, int stringsize);
+int VerifCombi(char username[], char password[]);
+void login(void);
+void LoadUsers(user_t user_list[]);
+
+
 int main(void){
     user_t user_list[MAX_USERS];
     LoadUsers(user_list);
