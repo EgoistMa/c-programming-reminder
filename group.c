@@ -109,6 +109,12 @@ void addEvent(event_t *events, int *EVENT_NUM)
         date_time_t date = {year, month, day, hour};
         events[*EVENT_NUM].remind_time = date;
 
+        char temp[MAX_COMMENT_LEN+1];
+       	printf("Enter comments>\n");
+       	scanf("%s", temp);
+        while(getchar()!='\n');
+        strcpy(events[*EVENT_NUM].comment,temp);
+
         (*EVENT_NUM)++;
     }
     else
@@ -218,7 +224,15 @@ void deleteEvent(event_t *events, int *EVENT_NUM)
 void exportEvent(event_t *events, int EVENT_NUM)
 {
 	FILE *fp =fopen(DB_EVENT, "w");
-
+	int i;
+	fprintf(fp, "%d\n", EVENT_NUM);
+	for(i=0; i<EVENT_NUM; i++)
+	{
+		fprintf(fp, "%d %d %d %d\n", events[i].remind_time.year, 
+			events[i].remind_time.month, events[i].remind_time.day, 
+			events[i].remind_time.hour);
+		fprintf(fp, "%s\n", events[i].comment);
+	}
 	fclose(fp);
 }
 
@@ -239,7 +253,16 @@ void readEvent(event_t *events, int *EVENT_NUM)
     }
     else
     {
-
+    	fscanf(fp, "%d", EVENT_NUM);
+        int i;
+        for(i=0; i<*EVENT_NUM; i++)
+        {
+            fscanf(fp, "%d %d %d %d", &events[i].remind_time.year, 
+			&events[i].remind_time.month, &events[i].remind_time.day, 
+			&events[i].remind_time.hour);
+			fscanf(fp, "%s", events[i].comment);
+        }
+        fclose(fp);
     }
 }
 
