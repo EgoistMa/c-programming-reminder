@@ -14,48 +14,61 @@ void Rencrypting(char* word, int stringsize);
 void Encrypting(char* word, int stringsize);
 int VerifCombi(char username[], char password[]);
 void login(void);
-void LoadUsers(user_t user_list[]);
+int LoadUsers(user_t user_list[]);
 
 
 int main(void){
     user_t user_list[MAX_USERS];
-    LoadUsers(user_list);
+    int verif = LoadUsers(user_list);
+    if (verif == 1) {
+        printf("Login in successfull.\n");
+    } else printf("Login in failed.\n");
     //login();
     return 0;
 }
 
-void LoadUsers(user_t user_list[]) {
+int LoadUsers(user_t user_list[]) {
     FILE* fichier = NULL;
     fichier = fopen("login.txt", "r");
-    int NumberLogin = 0;
-    int i = 0, j = 0;
     if (fichier != NULL){
-        char line[30];
-        char username[15];
-        char password[15];
-        while(fgets(line,30, fichier)){  //Reading the file line by line
-            i = 0;
-            fscanf(fichier,"%s", &line);
-            while(line[i] != '|') {  //Reading the first 15 characters of the line and saving them in username[], stopping when there is a space.
-                username[i] = line[i];
-                i++;
+        int nbline = 0, i = 0, j = 0;
+        char c;
+        do
+        {
+            c = fgetc(fichier);
+            if (c == '\n') {
+                nbline++;
             }
-            i++;
-            while (line[i] != '|') {  //Reading the next 15 characters of the line and saving them in password[], stopping when there is a space.
-                password[i] = line[i];
-                i++;
-                printf("a");
-            }
-            strcpy(user_list[NumberLogin].username, username);
-            strcpy(user_list[NumberLogin].password, password);
-            NumberLogin++;
+        } while (c != EOF);
+        nbline++;
+        rewind(fichier);
+        for(i = 0; i < nbline; i++){  //Reading the file line by line
+            fscanf(fichier, "%s %s", user_list[i].username, user_list[i].password);
         }
+        for (i = 0; i<nbline; i++) {
+            printf("Username: %s Password: %s\n", &user_list[i].username, &user_list[i].password);
+        }
+        printf("Username: ");
+        char usern[15];
+        scanf("%s", usern);
+        printf("Password: ");
+        char passw[15];
+        scanf("%s", passw);
+        for(i = 0; i<nbline; i++) {
+            printf("[username] you entered %s and i'm reading %s\n", usern, user_list[i].username);
+            printf("[password] you entered %s and i'm reading %s\n", passw, user_list[i].password);
+            printf("\n");
+            if(user_list[i].username == usern && user_list[i].password == passw){
+                return 1;
+            }
+        }
+        return 0;
+
     } else {
         printf("Opening error.");
     }
-    for (i = 0; i<NumberLogin; i++) {
-        printf("Username: %s Password: %s\n", &user_list[i].username, &user_list[i].password);
-    }
+    //Users from the file are now saved, we can ask the user to enter username & password
+
 }
 
 //void UsersNumber()
