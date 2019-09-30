@@ -28,43 +28,37 @@ void LoadUsers(user_t user_list[]) {
     FILE* fichier = NULL;
     fichier = fopen("login.txt", "r");
     int NumberLogin = 0;
-    int i = 0;
+    int i = 0, j = 0;
     if (fichier != NULL){
         char line[30];
         char username[15];
         char password[15];
-        username[14] = '\0';
-        password[14] = '\0';
-        while(fgets(line,30, fichier)){
+        while(fgets(line,30, fichier)){  //Reading the file line by line
+            i = 0;
             fscanf(fichier,"%s", &line);
-            for(i = 0; i<14; i++) {  //Reading the first 15 characters of the line and saving them in username[], stopping when there is a space.
-                if(line[i] == " "){
-                    username[i] = '\0';
-                    i = 14;
-                } else {
-                    username[i] = line[i];
-                }
+            while(line[i] != '|') {  //Reading the first 15 characters of the line and saving them in username[], stopping when there is a space.
+                username[i] = line[i];
+                i++;
             }
-            for(i = 0; i<14; i++) {  //Reading the next 15 characters of the line and saving them in password[], stopping when there is a space.
-                if(line[i+15] == " ") {
-                    password[i] = '\0';
-                } else {
-                    password[i] = line[i];
-                }
+            i++;
+            while (line[i] != '|') {  //Reading the next 15 characters of the line and saving them in password[], stopping when there is a space.
+                password[i] = line[i];
+                i++;
+                printf("a");
             }
             strcpy(user_list[NumberLogin].username, username);
             strcpy(user_list[NumberLogin].password, password);
+            NumberLogin++;
         }
     } else {
         printf("Opening error.");
     }
-    for (i = 0; i<sizeof(user_list)/sizeof(user_t); i++) {
+    for (i = 0; i<NumberLogin; i++) {
         printf("Username: %s Password: %s\n", &user_list[i].username, &user_list[i].password);
     }
-    printf("%d", sizeof(user_list));
 }
 
-void UsersNumber()
+//void UsersNumber()
 //ASK a login and a password, say if they match in our login file                   Matthieu COLIN
 void login(void) {
     printf("\nEnter your user name: ");
