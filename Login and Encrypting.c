@@ -31,7 +31,7 @@ int LoadUsers(user_t user_list[]) {
     FILE* fichier = NULL;
     fichier = fopen("login.txt", "r");
     if (fichier != NULL){
-        int nbline = 0, i = 0, j = 0;
+        int nbline = 0, i = 0;
         char c;
         do
         {
@@ -46,8 +46,9 @@ int LoadUsers(user_t user_list[]) {
             fscanf(fichier, "%s %s", user_list[i].username, user_list[i].password);
         }
         for (i = 0; i<nbline; i++) {
-            printf("Username: %s Password: %s\n", &user_list[i].username, &user_list[i].password);
+            printf("Username: %s Password: %s\n", user_list[i].username, user_list[i].password);
         }
+        //Users from the file are now saved, we can ask the user to enter username & password
         printf("Username: ");
         char usern[15];
         scanf("%s", usern);
@@ -67,7 +68,7 @@ int LoadUsers(user_t user_list[]) {
     } else {
         printf("Opening error.");
     }
-    //Users from the file are now saved, we can ask the user to enter username & password
+    return 0;
 }
 
 //Encrypting, receive a string and his size and return an encrypted one             Matthieu COLIN
