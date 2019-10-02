@@ -2,6 +2,7 @@
  * List header files 
  *******************************************************************************/
 #include<stdio.h>/*printf,scanf*/
+#include<stdlib.h>
 #include<string.h>
 
 /*******************************************************************************
@@ -39,7 +40,7 @@ void addEvent(event_t *events, int *EVENT_NUM);
 void deleteEvent(event_t *events, int *EVENT_NUM);
 void exportEvent(event_t *events, int EVENT_NUM);
 void readEvent(event_t *events, int *EVENT_NUM);
-void exit();
+void exitProgram(void);
 
 int DT_is_valid(const int year, const int month, 
 	const int day, const int hour);
@@ -59,15 +60,15 @@ int main(void)
         while(getchar()!='\n');
         switch(choice)
         {
-            case 1:
+            case 1:addEvent(events, &EVENT_NUM);
                 break;
             case 2:
                 break;
-            case 3:
+            case 3:exportEvent(events, EVENT_NUM);
                 break;
-            case 4:
+            case 4:readEvent(events, &EVENT_NUM);
                 break;
-            case 5:
+            case 5:exitProgram();
                 exit(0);
             default:printf("Invalid choice\n");
         }
@@ -273,7 +274,7 @@ void readEvent(event_t *events, int *EVENT_NUM)
  * outputs:
  * - none
  *******************************************************************************/
-void exit()
+void exitProgram(void)
 {
 	
 	exit(0);
