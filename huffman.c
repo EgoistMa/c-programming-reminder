@@ -31,6 +31,7 @@ typedef struct record
 	int date;
 	struct record *next;
 } record_t;
+
 int readFile(FILE *fp,feq_table_t *feq_table)
 {
 	if(fp == NULL)
@@ -41,7 +42,7 @@ int readFile(FILE *fp,feq_table_t *feq_table)
 	FILE *debug = fopen("debug.txt","w+");
 	int feq_table_size = 0;
 	int i;
-	while (fgets(line, 1024, fp))
+	while (fgets(line, 30, fp))
 	{
 		fprintf(debug,"%s\n",line);
 		char *p = line;
@@ -197,13 +198,29 @@ int set_huffman_code(huffmanNode_t *root,char* s,int len)
 	}
 	return 0;
 }
-
+int setup_huffmanCode_by_leaf(huffmanNode_t *root,huffman_code_table_t *table[],int i){
+	if (root != NULL){
+		setup_huffmanCode_by_leaf((*root).leftNode,table,i);
+		if ((*root).leftNode == NULL && (*root).rightNode == NULL)
+		{
+			printf("%c\t%s\n", (*root).data, (*root).huffmancode);
+			//memcpy(table[i]->c, (*root).data, sizeof(char))
+			strcpy(table[i]->c,root->data);
+			strcpy(table[i]->code,root->huffmancode);
+			i++;
+		}
+		setup_huffmanCode_by_leaf((*root).rightNode,table,i);
+	}
+	return 0;
+}
 
 
 int set_huffman_table(huffmanNode_t *root,int n,huffman_code_table_t *table[n])
 {
-	
+	int i=0;
+	setup_huffmanCode_by_leaf(root,&table[n],i);
 	return 0;
+	
 }
 
 int zip(int debugmode)
@@ -253,7 +270,7 @@ int zip(int debugmode)
 		printf("--------end debug mode--------\n");
 	}
 	huffman_code_table_t *table[element_in_feq_table];
-	set_huffman_table(&root,element_in_feq_table,table);
+	setup_huffmanCode_by_leaf(&root,table,0);
 	return 0;
 }
 int main()
