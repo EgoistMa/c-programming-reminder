@@ -1,297 +1,357 @@
+/*
+//  main.c
+//  zip
+//
+//  Created by YUZURIHA_EGOIST on 8/10/19.
+//  Copyright © 2019 Tianyu Ma. All rights reserved.
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//define huffmanNode struct
+
+/*database names*/
+#define DATABASE "database.txt"
+#define ZIPPED "zipped.DB"
+
+/*debug file names*/
+#define DEBUGFILE "debug.txt"
+#define UNZIPDEBUGFILE "unzipdebug.txt"
+
+/*huffman code struct*/
 typedef struct huffmanNode
 {
-	int weight;
-	char data;
-	struct huffmanNode *leftNode;
-	struct huffmanNode *rightNode;
-	char * huffmancode;
+    char data;
+    int weight;
+    struct huffmanNode *leftNode;
+    struct huffmanNode *rightNode;
 } huffmanNode_t;
+/*Global variable*/
+char huffmantable[256][100];
+huffmanNode_t left[100] = {{0,0,NULL,NULL}};
+huffmanNode_t right[100] = {{0,0,NULL,NULL}};
 
-typedef struct feq_table
+/*sort node hight>>>>>>>>>>>>>>>low weight*/
+void sort(huffmanNode_t* node,int length)
 {
-	char c;
-	int f;
-} feq_table_t;
-
-typedef struct huffman_code_table
-{
-	char c;
-	char code;
-} huffman_code_table_t;
-
-typedef struct record
-{
-	int year;
-	int month;
-	int date;
-	struct record *next;
-} record_t;
-
-int readFile(FILE *fp,feq_table_t *feq_table)
-{
-	if(fp == NULL)
-	{
-		return 1;
-	}
-	char line[1024] = "";
-	FILE *debug = fopen("debug.txt","w+");
-	int feq_table_size = 0;
-	int i;
-	while (fgets(line, 30, fp))
-	{
-		fprintf(debug,"%s\n",line);
-		char *p = line;
-		while(*p != '\0' && *p !='\n')
-		{
-			for(i = 0;i<=feq_table_size;i++)
-			{
-				if(feq_table[i].c == *p)//current char in the feq_table
-				{
-					feq_table[i].f++;
-					break;
-				}
-				if(i == feq_table_size && feq_table[i].c != *p)//current char not in the feq_table
-				{
-					feq_table[feq_table_size].c = *p;
-					feq_table[feq_table_size].f = 1;
-					feq_table_size++;
-					break;
-				}
-			}
-			p++; //get next char of the p
-		}
-
-	}
-	//feq_table = (feq_table_t *)realloc(feq_table,(feq_table_size-1)*sizeof(feq_table_t));
-	/* need to fix this */ //feq_table[feq_table_size] = '\0';
-	return feq_table_size;
+    int i,j;
+    huffmanNode_t temp;
+    for(i=0;i<length-1;i++)
+    {
+        for(j=0; j <length-i-1;j++)
+        {
+            if(node[j].weight < node[j+1].weight)
+            {
+                temp = node[j];
+                node[j] = node[j+1];
+                node[j+1] = temp;
+            }
+        }
+    }
 }
-int sort(huffmanNode_t *node,int len)
+/*pre order traversing the binary tree*/
+void print_huffman_pre(huffmanNode_t *node,FILE *debug){
+        if (node != NULL){
+            fprintf(debug,"%c\t%d\n", node->data, node->weight); /*save to debug file*/
+            print_huffman_pre(node->leftNode,debug);
+            print_huffman_pre(node->rightNode,debug);
+        }
+}
+/*build huffman tree*/
+void create_huffman_tree(huffmanNode_t *node,int length)
 {
-	int i,j;
-	huffmanNode_t temp;
-	for(i=0;i<len-1;i++)
-	{
-		for(j=0; j <len-i-1;j++)
-		{
-			if(node[j].weight < node[j+1].weight)
-			{
-				temp = node[j];
-				node[j] = node[j+1];
-				node[j+1] = temp;
-			}
-		}
-	}
-	return 0;
+    while(length !=1)
+    {
+        sort(node,length);
+        huffmanNode_t parent = {0,0,NULL,NULL};
+        left[length] = node[length-2];
+        right[length] = node[length-1];
+        parent.weight = left[length].weight +right[length].weight;
+        parent.leftNode = &left[length];
+        parent.rightNode = &right[length];
+        node[length-2] = parent;
+        length--;
+    }
+    return;
+}
+/*save huffman code to huffman table*/
+void coding(huffmanNode_t *node,char *unfinished_code,int length){
+    if(node->leftNode == NULL || node->rightNode == NULL){
+        unfinished_code[length] ='\0';
+        strcpy(huffmantable[(node->data)-0],unfinished_code);
+        return;
+    }
+    unfinished_code[length] = '0';
+    coding(node->leftNode,unfinished_code,length+1);
+    unfinished_code[length] = '1';
+    coding(node->rightNode,unfinished_code,length+1);
 }
 
-huffmanNode_t create_Huffman_Tree(int element_in_feq_table, feq_table_t feq_table[])
+int zip(int mode)
 {
-	//allocate nodes memo address
-	huffmanNode_t *root = NULL;
-	huffmanNode_t *huffmanNodes = calloc(element_in_feq_table, sizeof(huffmanNode_t));
-	huffmanNode_t *huffmanNodes_DATA = calloc(element_in_feq_table, sizeof(huffmanNode_t));
-	int current=0;\
-	int element_in_huffmanNodes=0;
-	int i;
-	for(i=0;i<element_in_feq_table;i++)
-	{
-		huffmanNode_t *node = (huffmanNode_t *)malloc(sizeof(huffmanNode_t));
-		(*node).data = feq_table[i].c;
-		(*node).weight = feq_table[i].f;
-		(*node).leftNode = NULL;
-		(*node).rightNode = NULL;
-		huffmanNodes[element_in_huffmanNodes++] = *node;
-		
-	}
-	
-	
-	while(element_in_huffmanNodes>0)
-	{
-		sort(huffmanNodes,element_in_huffmanNodes);  //weight high -> low
-		printf("--------debug mode--------\n");
-		for(int i =0;i<element_in_huffmanNodes;i++)
-		{
-			printf("<%c\t%d>",huffmanNodes[i].data,huffmanNodes[i].weight);
-		}
-		printf("\n");
-		printf("--------end debug mode--------\n");
-		
-		if(element_in_huffmanNodes == 1)
-		{
-			root = &huffmanNodes[0];
-			element_in_huffmanNodes--;
-		}else
-		{
-			//get last two nodes
-			huffmanNodes_DATA[current++] = huffmanNodes[element_in_huffmanNodes-1];
-			huffmanNodes_DATA[current++] = huffmanNodes[element_in_huffmanNodes-2];
-			//remove last two nodes
-			element_in_huffmanNodes = element_in_huffmanNodes - 2;
-			//make the new node
-			huffmanNode_t *temp_node = (huffmanNode_t *) calloc(1, sizeof(huffmanNode_t));
-			(*temp_node).weight = huffmanNodes_DATA[current-2].weight + huffmanNodes_DATA[current-1].weight;
-			if(huffmanNodes_DATA[current-2].weight<huffmanNodes_DATA[current-1].weight)
-			{
-				(*temp_node).leftNode = &huffmanNodes_DATA[current-2];
-				(*temp_node).rightNode = &huffmanNodes_DATA[current-1];
-			}else
-			{
-				(*temp_node).leftNode = &huffmanNodes_DATA[current-1];
-				(*temp_node).rightNode = &huffmanNodes_DATA[current-2];
-			}
-			element_in_huffmanNodes++;
-			huffmanNodes[element_in_huffmanNodes-1] = *temp_node;
-		}
-	}
-	return *root;
+    int frequency_table[256] ={0};/*table for huffman tree*/
+    char read_char_buffer; /*buffer*/
+    FILE *fpr = fopen(DATABASE,"r");/*input of originalfile*/
+    FILE *fpw = fopen(ZIPPED,"wb");
+    FILE *config = fopen(".config", "w");
+    huffmanNode_t node[100] = {{0,0,NULL,NULL}};/*Initialize nodes*/
+    /*data for Statistical compression ratio*/
+    int origianl_file_length = 0;
+    int zipped_file_length = 0;
+    /*load file, and statistical the frequence of text*/
+    int current_node=0;
+     /* temp code save*/
+    char unfinished_code[10000];
+    /*for compress*/
+    unsigned char data_in_char = 0;
+    int current=0;
+    /*variable for loop*/
+    int i;
+    
+    while((read_char_buffer = fgetc(fpr))!=EOF)
+    {
+        frequency_table[read_char_buffer-0]++;
+        origianl_file_length++;
+    }
+    /*save the frequece table in nodes*/
+    for(i=0;i<128;i++)
+    {
+        if(frequency_table[i]!=0)
+        {
+            node[current_node].data = i;/*ascii code*/
+            node[current_node].weight = frequency_table[i];
+            current_node++;
+        }
+    }
+    /*build huffman tree*/
+    create_huffman_tree(node,current_node);
+    if(mode)
+    {
+        FILE *debug = fopen(DEBUGFILE, "w+");
+        fprintf(debug, "-----------huffman tree-----------\n");
+        print_huffman_pre(node,debug);
+        fprintf(debug, ">>>>>>>>huffman tree end<<<<<<<<<<\n");
+        fclose(debug);
+        printf("proccess dumped\n");
+    }
+    /*coding in huffman tree*/
+    coding(&node[0],unfinished_code,0);
+    if(mode)
+    {
+        FILE *debug = fopen(DEBUGFILE, "a+");
+        fprintf(debug, "-----------ascii table with huffman code-----------\n");
+        for(i = 0; i<256;i++)
+        {
+            fprintf(debug,"%c\t%s\n",i,huffmantable[i]);
+        }
+        fprintf(debug, ">>>>>>>>>>ascii table with huffman code end<<<<<<<<\n");
+        printf("proccess dumped\n");
+        fclose(debug);
+    }
+    /*write config file*/
+    for(i =0; i<256;i++)
+    {
+        fprintf(config,"%d %d\n",i,frequency_table[i]);
+    }
+    fclose(config);
+    /*compress the DB*/
+    fseek(fpr, 0L, 0);
+    while ((read_char_buffer = fgetc(fpr))!=EOF) {
+        for(i=0; i<strlen(huffmantable[read_char_buffer-0]); i++)
+        {
+                    data_in_char |= huffmantable[read_char_buffer-0][i]-'0';
+                    current++;
+                    if(current == 8){
+                        fwrite(&data_in_char,sizeof(char),1,fpw);
+                        zipped_file_length++;
+                        data_in_char = 0;
+                        current=0;
+                    }
+                    else{
+                        data_in_char = data_in_char << 1;
+                    }
+                }
+    }
+    if(current != 8){
+        data_in_char = data_in_char << (7-current);
+        fwrite(&data_in_char,sizeof(char),1,fpw);
+        zipped_file_length++;
+    }
+    fclose(fpr);
+    fclose(fpw);
+    
+    /*Statistical compression ratio*/
+    printf("Compress finished!!!!!\n");
+    printf("Original File:%d character\n",origianl_file_length);
+    printf("Zipped File:%d character\n",zipped_file_length);
+    printf("Compression ratio: %.2f%%\n",(float)(origianl_file_length-zipped_file_length)/origianl_file_length*100);
+    return 0;
 }
-int print_huffman_pre(huffmanNode_t *root){
-	if (root != NULL){
-		fprintf(stderr, "%c\t%d\n", (*root).data, (*root).weight);
-		print_huffman_pre((*root).leftNode);
-		print_huffman_pre((*root).rightNode);
-	}
-	return 0;
-}
-
-int print_leaf(huffmanNode_t *root){
-	if (root != NULL){
-		print_leaf((*root).leftNode);
-		if ((*root).leftNode == NULL && (*root).rightNode == NULL)
-		{
-			printf("%c\t%s\n", (*root).data, (*root).huffmancode);
-			
-		}
-		print_leaf((*root).rightNode);
-	}
-	return 0;
-}
-
-int set_huffman_code(huffmanNode_t *root,char* s,int len)
+/*Find a node based on the code*/
+huffmanNode_t *unzipcode(huffmanNode_t *node,int flag)
 {
-	huffmanNode_t current = *root;
-	if(current.leftNode != NULL)
-	{
-		strcat(s,"0");
-		set_huffman_code(*&(current.leftNode),s,len+1);
-	}
-	if (current.rightNode != NULL)
-	{
-		strcat(s,"1");
-		set_huffman_code(*&(current.rightNode),s,len+1);
-	}
-	if(current.leftNode == NULL && current.rightNode == NULL)
-	{
-		s[len] = '\0';
-		(*root).huffmancode = (char *)malloc(sizeof(char)*20);
-		strcpy((*root).huffmancode,s);
-		s[len-1] = '\0';
-	}else
-	{
-		s[len-1] = '\0';
-	}
-	return 0;
-}
-int setup_huffmanCode_by_leaf(huffmanNode_t *root,huffman_code_table_t *table[],int i){
-	if (root != NULL){
-		setup_huffmanCode_by_leaf((*root).leftNode,table,i);
-		if ((*root).leftNode == NULL && (*root).rightNode == NULL)
-		{
-			printf("%c\t%s\n", (*root).data, (*root).huffmancode);
-			//memcpy(table[i]->c, (*root).data, sizeof(char))
-			strcpy(table[i]->c,root->data);
-			strcpy(table[i]->code,root->huffmancode);
-			i++;
-		}
-		setup_huffmanCode_by_leaf((*root).rightNode,table,i);
-	}
-	return 0;
+    if(flag ==0)
+    {
+        return node->leftNode;
+    }else
+    {
+        return node->rightNode;
+    }
 }
 
-
-int set_huffman_table(huffmanNode_t *root,int n,huffman_code_table_t *table[n])
+int unzip(int mode)
 {
-	int i=0;
-	setup_huffmanCode_by_leaf(root,&table[n],i);
-	return 0;
-	
+    /*read config file*/
+    FILE *config = fopen(".config", "r");
+    int frequency_table[256];
+    int ascii_code = 0;
+    int frequency = 0;
+    
+    /*caculate file length, stop at file length reached */
+    int file_length=0;
+    
+    /*unzip*/
+    huffmanNode_t node[100] = {{0,0,NULL,NULL}};
+    int current_node = 0;
+    char read_char_buffer;
+    FILE *fpr = fopen(ZIPPED, "rb");
+    char samplechar = (char)128;
+    char tempchar =0;
+    huffmanNode_t *temp = &node[0];
+    int length = 0;
+    
+    /*buckup database*/
+    char newname[60];
+    newname[0] =0;
+    strcat(newname, DATABASE);
+    strcat(newname, ".old");
+    printf("Backup Old Database to : %s\n",newname);
+    rename(DATABASE, newname);
+    
+    /*open database for decoding*/
+    FILE *fpw = fopen(DATABASE, "w");
+    
+    /*variable for loop*/
+    int i;
+    /*read config file*/
+    while(1)
+    {
+        fscanf(config,"%d %d\n",&ascii_code,&frequency);
+        if(ascii_code>=128)
+        {
+            break;
+        }
+        frequency_table[ascii_code] = frequency;
+    }
+    if(mode)
+    {
+        FILE *debug = fopen(UNZIPDEBUGFILE,"w");
+        for(i =0;i<128;i++)
+        {
+            fprintf(debug,"%c %d\n",i,frequency_table[i]);
+        }
+        printf("proccess dumped\n");
+        fclose(debug);
+    }
+
+    /*get file_length*/
+    for(i =0;i<128;i++)
+    {
+        file_length += frequency_table[i];
+    }
+    if(mode)
+    {
+        FILE *debug = fopen(UNZIPDEBUGFILE,"a+");
+        fprintf(debug,"excepted file length is: %d\n",file_length);
+        printf("proccess dumped\n");
+        fclose(debug);
+    }
+    /*setup huffman tree*/
+    for(i=0;i<128;i++)
+    {
+        if(frequency_table[i]!=0)
+        {
+            node[current_node].data = (char)i;/*ascii code*/
+            node[current_node].weight = frequency_table[i];
+            current_node++;
+        }
+    }
+    create_huffman_tree(node,current_node);
+    if(mode)
+    {
+        FILE *debug = fopen(UNZIPDEBUGFILE, "a+");
+        fprintf(debug, "-----------huffman tree-----------\n");
+        print_huffman_pre(node,debug);
+        fprintf(debug, ">>>>>>>>huffman tree end<<<<<<<<<<\n");
+        printf("proccess dumped\n");
+        fclose(debug);
+    }
+    /*unzip the file*/
+    while(fread(&read_char_buffer,sizeof(char),1,fpr))
+    {
+        if(file_length == length)
+        {
+            break;
+        }
+        for(i=0; i< 8; i++)
+        {
+            tempchar = read_char_buffer & samplechar;
+            read_char_buffer = read_char_buffer << 1;
+            tempchar = tempchar >>7;
+            temp = unzipcode(temp,tempchar-0);
+            if(temp->leftNode == NULL || temp->rightNode == NULL)
+            {
+                fprintf(fpw,"%c",temp->data);
+                length++;
+                temp = &node[0];
+            }
+        }
+    }
+    fclose(fpr);
+    fclose(fpw);
+    printf("Database updated!!!!!\n");
+    return 0;
 }
 
-int zip(int debugmode)
-{
-	//reading a file and find the frequency of chars
-	FILE *fp = fopen("a.txt", "r+");
-	feq_table_t feq_table[129];
-	int n = readFile(fp,feq_table);
-	feq_table_t feq_table_fianl[n];
-	int temp;
-	for(temp =0;temp<=n;temp++)
-	{
-		feq_table_fianl[temp] = feq_table[temp];
-	}
-	if(debugmode)
-	{
-		 printf("--------debug mode--------\n");
-		int test_i,test_sum = 0;
-		for(test_i = 0; test_i < n;test_i++)
-		{
-			printf("%c%d\n",feq_table_fianl[test_i].c,feq_table_fianl[test_i].f);
-			test_sum += feq_table_fianl[test_i].f;
-		}
-		 printf("--------end debug mode--------\n");
-	}
-	
-	int element_in_feq_table = (int)(sizeof(feq_table_fianl)/sizeof(feq_table_t));
-
-	//create huffman tree
-	huffmanNode_t root = create_Huffman_Tree(element_in_feq_table, feq_table_fianl);
-	if(debugmode)
-	{
-		printf("--------debug mode--------\n");
-		printf("pre-order\n");
-		print_huffman_pre(&root);
-		 printf("--------end debug mode--------\n");
-	}
-	//create huffman code
-	char *s = (char *)malloc(sizeof(char)*128);
-	s[0] = '\0';
-	set_huffman_code(&root,s,0);
-	if(debugmode)
-	{
-		printf("--------debug mode--------\n");
-		printf("print leafs\n");
-		print_leaf(&root);
-		printf("--------end debug mode--------\n");
-	}
-	huffman_code_table_t *table[element_in_feq_table];
-	setup_huffmanCode_by_leaf(&root,table,0);
-	return 0;
-}
-int main()
-{
-	int mode = 1;
-	zip(mode);
+int main(void) {
+    int mode = 0;
+    int flag = 0;
+    char pause;
+    while(1)
+    {
+        fflush(stdin);
+        printf("-------------------------------------\nplease make a selection\n1. zip database\n2. unzip database\n3. exit\n-------------------------------------\n");
+        scanf("%d",&flag);
+        while(getchar()!='\n');
+        switch (flag)
+        {
+            case 1:
+            {
+                printf("staring zip sequence...........\n");
+                zip(mode);
+                printf("press any key to continue......\n");
+                scanf("%c",&pause);
+                break;
+            }
+            case 2:
+            {
+                printf("staring unzip sequence...........\n");
+                unzip(mode);
+                printf("press any key to continue........\n");
+                scanf("%c",&pause);
+                break;
+            }
+            case 3:
+                printf("shutting down...........\n");
+                exit(0);
+                
+            case 99:
+                printf("Debug mode enabled(something went wrong?)\n");
+                mode = 1;
+                break;
+        }
+    }
+    return 0;
 }
 
-record_t* search_by_date(record_t *root,int year,int month,int date)
-{
-	//find length of records
-	record_t *current;
-	record_t *results = NULL;
-	record_t *head = results;
-	//searching
-	for (current = root; current !=NULL; current = (*current).next) {
-		if((*current).year == year && (*current).month == month && (*current).date == date)
-		{
-			results = current;
-			results = results->next;
-		}
-	}
-	return head;
-}
+
