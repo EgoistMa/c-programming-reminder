@@ -56,7 +56,7 @@ int need_swap(event_t e1,event_t e2);
 /*******************************************************************************
  * Main
  *******************************************************************************/
-int main(void)/*Nuo Chen*/
+int main(void)
 {
     event_t events [MAX_NUM_EVENTS] = {{{0,0,0},0}};
     int EVENT_NUM=0;/*Cerent event number in the program*/
@@ -88,7 +88,7 @@ int main(void)/*Nuo Chen*/
                 break;
             case 3:display_events(events, EVENT_NUM);
                 break;
-            case 4:sort_by_data(events , EVENT_NUM);
+            case 4:display_all(events, EVENT_NUM);
                 break;
             case 5:exportEvent(events, EVENT_NUM);
                 break;
@@ -144,8 +144,8 @@ void print_menu (void)
     printf("\n"
            "1. add an event\n"
            "2. delete an event\n"
-           "3. display events by date\n"
-           "4. sort events by date\n"
+           "3. search events by date and display\n"
+           "4. display all the events and sort events by date\n"
            "5. save the events to the database file\n"
            "6. load the events from the database file\n"
            "7. zip the program\n"
@@ -261,10 +261,18 @@ int DT_is_valid(const int year, const int month, const int day)
 
 int display_all(event_t *events,int EVENT_NUM)
 {
-    int i;
-    for(i=0;i<EVENT_NUM;i++)
+    if (EVENT_NUM == 0)
     {
-        printf("reminder #%d :%d-%d-%d \n notes: %s\n",i+1,events[i].remind_time.year,events[i].remind_time.month,events[i].remind_time.day,events[i].comment);
+        printf("There is no events.\n");
+    }
+    else
+    {
+        sort_by_data(events, EVENT_NUM);
+        int i;
+        for(i=0;i<EVENT_NUM;i++)
+        {
+            printf("reminder #%d :%d-%d-%d \n notes: %s\n",i+1,events[i].remind_time.year,events[i].remind_time.month,events[i].remind_time.day,events[i].comment);
+        }
     }
     return 0;
 }
@@ -342,7 +350,7 @@ void display_events(event_t *events, int EVENT_NUM)
 
 int need_swap(event_t e1,event_t e2)
 {
-    // All cases when true should be returned
+    /* All cases when true should be returned*/
     if (e1.remind_time.year > e2.remind_time.year)
     {
         return 1;

@@ -1,10 +1,10 @@
-//
+/*
 //  zip.h
 //  Group Task
 //
 //  Created by cn2nick on 8/10/19.
 //  Copyright © 2019 nick. All rights reserved.
-//
+*/
 
 #ifndef zip_h
 #define zip_h

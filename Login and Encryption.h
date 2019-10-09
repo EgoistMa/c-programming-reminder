@@ -1,10 +1,10 @@
-//
+/*
 //  Login and Encryption.h
 //  Group Task
 //
 //  Created by cn2nick on 8/10/19.
 //  Copyright © 2019 nick. All rights reserved.
-//
+*/
 
 #ifndef Login_and_Encryption_h
 #define Login_and_Encryption_h

@@ -112,7 +112,7 @@ void User_login(int mode)
     fclose(fpr);
     remove(LOGIN);
     int flag = 0;
-    //check password
+    /*check password*/
     for(i = 0;i<user_number;i++)
     {
         if(!strcmp(user_list[i].username, username) && !strcmp(user_list[i].password, password))
